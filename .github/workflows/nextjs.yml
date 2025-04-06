@@ -35,7 +35,15 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Create build config that ignores TypeScript errors
+      - name: Fix API routes for static export
+        run: |
+          # Find all route.ts or route.js files in API folder and add dynamic = "force-static"
+          find app/api -name "route.ts" -o -name "route.js" | while read file; do
+            # Add export const dynamic = "force-static" to the beginning of the file
+            sed -i '1s/^/export const dynamic = "force-static";\n/' "$file"
+          done
+
+      - name: Create build config for static export
         run: |
           echo "/** @type {import('next').NextConfig} */
           const nextConfig = {
