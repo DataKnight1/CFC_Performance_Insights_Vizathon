@@ -1,0 +1,271 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Chelsea FC colors */
+  --chelsea-blue: 217, 84, 30; /* #1E54B7 */
+  --chelsea-dark-blue: 220, 100, 29; /* #034694 */
+  --chelsea-accent: 216, 74, 88; /* #3F88E5 */
+  
+  /* Base colors */
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 7, 14, 22;
+  --background-end-rgb: 7, 14, 22;
+  
+  /* Football-themed variables */
+  --grass-color: 120, 50%, 40%;
+  --pitch-line-color: 0, 0%, 95%;
+  
+  /* Typography */
+  --heading-font: var(--font-oswald);
+  --body-font: var(--font-inter);
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+}
+
+/* Custom scrollbar for a more polished look */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(7, 14, 22, 0.7);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(30, 84, 183, 0.7);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(30, 84, 183, 0.9);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Football themed utility classes */
+  .text-chelsea-blue {
+    color: rgb(30, 84, 183);
+  }
+  
+  .bg-chelsea-blue {
+    background-color: rgb(30, 84, 183);
+  }
+  
+  .border-chelsea-blue {
+    border-color: rgb(30, 84, 183);
+  }
+  
+  .text-chelsea-dark-blue {
+    color: rgb(3, 70, 148);
+  }
+  
+  .bg-chelsea-dark-blue {
+    background-color: rgb(3, 70, 148);
+  }
+  
+  /* Gradient utilities */
+  .bg-chelsea-gradient {
+    background: linear-gradient(135deg, rgb(30, 84, 183), rgb(3, 70, 148));
+  }
+  
+  .bg-chelsea-gradient-light {
+    background: linear-gradient(135deg, rgba(30, 84, 183, 0.2), rgba(3, 70, 148, 0.2));
+  }
+  
+  /* Card effects */
+  .chelsea-card {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(30, 84, 183, 0.2);
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+  }
+  
+  .chelsea-card:hover {
+    border-color: rgba(30, 84, 183, 0.6);
+    box-shadow: 0 0 15px rgba(30, 84, 183, 0.3);
+  }
+  
+  /* Football-themed animated glow */
+  .chelsea-glow {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .chelsea-glow::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at center, rgba(30, 84, 183, 0.2) 0%, transparent 70%);
+    opacity: 0;
+    animation: chelsea-pulse 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  
+  @keyframes chelsea-pulse {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+  }
+  
+  /* Football field pattern */
+  .field-pattern {
+    background-image: 
+      linear-gradient(rgba(30, 84, 183, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30, 84, 183, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 217 84% 30%;  /* Updated to Chelsea blue */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 220 100% 29%; /* Chelsea dark blue */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 216 74% 88%;  /* Chelsea accent blue */
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 217 84% 30%;  /* Chelsea blue for focus rings */
+    --chart-1: 217 84% 30%;  /* Chelsea blue */
+    --chart-2: 220 100% 29%; /* Chelsea dark blue */
+    --chart-3: 216 74% 88%;  /* Chelsea accent blue */
+    --chart-4: 197 37% 24%;
+    --chart-5: 43 74% 66%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 217 84% 30%;  /* Chelsea blue */
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 84% 30%;  /* Chelsea blue */
+  }
+  
+  .dark {
+    --background: 222 47% 11%;  /* Dark blue-ish background */
+    --foreground: 0 0% 98%;
+    --card: 223 47% 11%;
+    --card-foreground: 0 0% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 217 84% 30%;  /* Chelsea blue */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 220 100% 29%; /* Chelsea dark blue */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 217 24% 20%;  /* Muted Chelsea blue */
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 216 74% 25%;  /* Darker accent blue */
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 217 24% 20%;  /* Chelsea blue border */
+    --input: 217 24% 20%;
+    --ring: 217 84% 40%;  /* Brighter Chelsea blue for focus rings */
+    --chart-1: 217 84% 50%;  /* Brighter Chelsea blue for charts */
+    --chart-2: 220 100% 39%; /* Brighter Chelsea dark blue */
+    --chart-3: 216 74% 60%;  /* Brighter Chelsea accent blue */
+    --chart-4: 197 47% 44%;
+    --chart-5: 43 84% 60%;
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 217 84% 40%;  /* Brighter Chelsea blue */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 34% 17%;  /* Darker Chelsea blue */
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 217 34% 17%;  /* Darker Chelsea blue */
+    --sidebar-ring: 217 84% 50%;  /* Brighter Chelsea blue */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--heading-font);
+  }
+  
+  /* Custom selection color */
+  ::selection {
+    background-color: rgba(30, 84, 183, 0.3);
+    color: white;
+  }
+}
+
+/* Enhanced card transitions */
+.card-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-transition:hover {
+  transform: translateY(-5px);
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+/* Data visualization elements */
+.stat-pill {
+  @apply px-2 py-1 text-xs font-medium rounded-full;
+  background: linear-gradient(90deg, rgba(30, 84, 183, 0.8), rgba(3, 70, 148, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.chelsea-progress-bar {
+  @apply h-2 rounded-full overflow-hidden bg-gray-800;
+}
+
+.chelsea-progress-fill {
+  @apply h-full rounded-full;
+  background: linear-gradient(90deg, #1E54B7, #3F88E5);
+  transition: width 1s ease-in-out;
+}
+

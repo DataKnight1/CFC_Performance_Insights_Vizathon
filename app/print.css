@@ -1,0 +1,51 @@
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .bg-gray-900 {
+    background-color: white !important;
+    color: black !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .text-white,
+  .text-gray-300,
+  .text-gray-400 {
+    color: black !important;
+  }
+
+  .border-gray-800,
+  .border-gray-700 {
+    border-color: #ddd !important;
+  }
+
+  /* Hide elements not needed for print */
+  header,
+  footer,
+  nav,
+  .animated-background,
+  .bg-image {
+    display: none !important;
+  }
+
+  /* Ensure tables are readable */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+  }
+
+  /* Ensure charts are visible */
+  svg,
+  canvas {
+    max-width: 100% !important;
+  }
+}
+
