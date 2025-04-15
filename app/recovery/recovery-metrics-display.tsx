@@ -10,67 +10,7 @@ import {
 } from 'recharts';
 import { fetchRecoveryData, calculateAverageRecoveryScores } from "../utils/recovery-data";
 
-interface RecoveryMetricsDisplayProps {
-  recoveryData: any[];
-  initialTimeFrame: '7days' | '30days' | '90days';
-  onTimeFrameChange: (timeFrame: '7days' | '30days' | '90days') => void;
-}
-
-// Custom tooltip that shows more detailed information
-const CustomTooltip = ({ active, payload, label, unit = "%" }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-gray-900 p-3 border border-gray-700 rounded shadow-lg">
-        <p className="text-gray-300 text-sm font-medium mb-1">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center mb-1 last:mb-0">
-            <div 
-              className="w-3 h-3 rounded-full mr-2" 
-              style={{ backgroundColor: entry.color }}
-            />
-            <p className="text-sm">
-              <span className="text-gray-400">{entry.name}: </span>
-              <span className="text-white font-medium">{entry.value}{unit}</span>
-            </p>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
-
-// Custom active shape for pie chart
-const renderActiveShape = (props: any) => {
-  const { 
-    cx, cy, innerRadius, outerRadius, startAngle, endAngle,
-    fill, payload, percent, value 
-  } = props;
-
-  return (
-    <g>
-      <text x={cx} y={cy - 15} dy={8} textAnchor="middle" fill="#fff" fontSize={14}>
-        {payload.name}
-      </text>
-      <text x={cx} y={cy + 15} dy={8} textAnchor="middle" fill="#fff" fontSize={18} fontWeight="bold">
-        {`${value}g`}
-      </text>
-      <text x={cx} y={cy + 35} dy={8} textAnchor="middle" fill="#ccc" fontSize={12}>
-        {`(${(percent * 100).toFixed(0)}%)`}
-      </text>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius + 5}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-      />
-    </g>
-  );
-};
-
+// Helper functions
 // Generate daily sleep data for the past N days
 const generateSleepData = (days: number) => {
   const data = [];
@@ -237,6 +177,68 @@ const generateTrainingLoadData = (days: number) => {
   }
   return data;
 };
+
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label, unit = "%" }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-gray-900 p-3 border border-gray-700 rounded shadow-lg">
+        <p className="text-gray-300 text-sm font-medium mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center mb-1 last:mb-0">
+            <div 
+              className="w-3 h-3 rounded-full mr-2" 
+              style={{ backgroundColor: entry.color }}
+            />
+            <p className="text-sm">
+              <span className="text-gray-400">{entry.name}: </span>
+              <span className="text-white font-medium">{entry.value}{unit}</span>
+            </p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom active shape for pie chart
+const renderActiveShape = (props: any) => {
+  const { 
+    cx, cy, innerRadius, outerRadius, startAngle, endAngle,
+    fill, payload, percent, value 
+  } = props;
+
+  return (
+    <g>
+      <text x={cx} y={cy - 15} dy={8} textAnchor="middle" fill="#fff" fontSize={14}>
+        {payload.name}
+      </text>
+      <text x={cx} y={cy + 15} dy={8} textAnchor="middle" fill="#fff" fontSize={18} fontWeight="bold">
+        {`${value}g`}
+      </text>
+      <text x={cx} y={cy + 35} dy={8} textAnchor="middle" fill="#ccc" fontSize={12}>
+        {`(${(percent * 100).toFixed(0)}%)`}
+      </text>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 5}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+    </g>
+  );
+};
+
+// Component interface
+interface RecoveryMetricsDisplayProps {
+  recoveryData: any[];
+  initialTimeFrame: '7days' | '30days' | '90days';
+  onTimeFrameChange: (timeFrame: '7days' | '30days' | '90days') => void;
+}
 
 // Main component
 export function RecoveryMetricsDisplay({ 
