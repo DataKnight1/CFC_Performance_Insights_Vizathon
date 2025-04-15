@@ -66,23 +66,206 @@ export function RecoveryData({ showCharts = true }: RecoveryDataProps) {
       return itemDate >= startDate && itemDate <= now;
     });
   };
+  
+  // Function to generate mock priority data
+  function generateMockPriorityData() {
+    return [
+      {
+        "Priority": 4,
+        "Category": "Recovery",
+        "Area": "Sleep Quality",
+        "Target": "Improve sleep score to 85%",
+        "Performance Type": "Recovery",
+        "Target set": "2022-09-01",
+        "Review Date": "2022-12-31",
+        "Tracking": "On Track"
+      },
+      {
+        "Priority": 5,
+        "Category": "Recovery",
+        "Area": "Post-match Recovery",
+        "Target": "Reduce soreness ratings post-match",
+        "Performance Type": "Recovery",
+        "Target set": "2022-08-01",
+        "Review Date": "2022-12-31",
+        "Tracking": "Achieved"
+      },
+      {
+        "Priority": 6,
+        "Category": "Recovery",
+        "Area": "Hydration",
+        "Target": "Maintain optimal hydration levels during matches",
+        "Performance Type": "Recovery",
+        "Target set": "2022-09-15",
+        "Review Date": "2023-01-15",
+        "Tracking": "Behind"
+      },
+      {
+        "Priority": 7,
+        "Category": "Recovery",
+        "Area": "Nutrition",
+        "Target": "Optimize pre-match nutrition protocol",
+        "Performance Type": "Recovery",
+        "Target set": "2022-09-01",
+        "Review Date": "2022-12-31",
+        "Tracking": "On Track"
+      },
+      {
+        "Priority": 11,
+        "Category": "Recovery",
+        "Area": "Stress Management",
+        "Target": "Implement mindfulness routine",
+        "Performance Type": "Recovery",
+        "Target set": "2022-10-01",
+        "Review Date": "2023-01-31",
+        "Tracking": "Not Started"
+      },
+      {
+        "Priority": 12,
+        "Category": "Recovery",
+        "Area": "Sleep Quality",
+        "Target": "Reduce screen time before bed",
+        "Performance Type": "Recovery",
+        "Target set": "2022-10-15",
+        "Review Date": "2023-01-15",
+        "Tracking": "On Track"
+      }
+    ];
+  }
+  
+  // Function to generate mock recovery metrics data
+  function generateMockRecoveryData() {
+    // Generate dates for the last 100 days
+    const mockData = [];
+    const today = new Date();
+    
+    for (let i = 100; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      const dateString = date.toISOString().split('T')[0];
+      
+      // Base values that improve over time with some randomness
+      const dayIndex = 100 - i; // 0 for oldest, 100 for today
+      const improvement = dayIndex / 200; // Gradual improvement factor
+      
+      // Generate some random ups and downs to make it look realistic
+      const randomFactor = Math.sin(i * 0.7) * 0.1; // Sine wave variation
+      const matchDayEffect = i % 7 === 0 ? -0.1 : 0; // Lower scores on match days (every 7 days)
+      const randomNoise = (Math.random() - 0.5) * 0.05; // Small random noise
+      
+      // Combine factors for the day's adjustment
+      const dayAdjustment = improvement + randomFactor + matchDayEffect + randomNoise;
+      
+      // Create a baseline for this day (0.5 to 0.9 range)
+      let baseline = Math.min(Math.max(0.7 + dayAdjustment, 0.5), 0.9);
+      
+      // Add to data array
+      mockData.push({
+        "date": dateString,
+        "bio_completeness": baseline + (Math.random() * 0.1),
+        "bio_composite": baseline - (Math.random() * 0.1),
+        "msk_joint_range_completeness": baseline + (Math.random() * 0.15),
+        "msk_joint_range_composite": baseline,
+        "msk_load_tolerance_completeness": baseline - (Math.random() * 0.05),
+        "msk_load_tolerance_composite": baseline - (Math.random() * 0.1),
+        "subjective_completeness": baseline + (Math.random() * 0.2),
+        "subjective_composite": baseline + (Math.random() * 0.1),
+        "soreness_completeness": baseline,
+        "soreness_composite": baseline - (Math.random() * 0.05),
+        "sleep_completeness": baseline + (Math.random() * 0.1),
+        "sleep_composite": baseline,
+        "emboss_baseline_score": baseline + (Math.random() * 0.05) - 0.025,
+        "stress_load_composite": baseline - (Math.random() * 0.1)
+      });
+    }
+    
+    return mockData;
+  }
 
   // Effect to load and process data
   useEffect(() => {
     async function loadData() {
       try {
+        // Use basePath for api routes on GitHub Pages
+        const basePath = process.env.NODE_ENV === 'production' ? '/CFC_Performance_Insights_Vizathon' : '';
+        
         // Fetch priority areas
-        const priorityResponse = await fetch('/api/data/mock-priority');
+        const priorityResponse = await fetch(`${basePath}/api/data/mock-priority`);
         if (!priorityResponse.ok) {
-          throw new Error(`Failed to fetch priority data: ${priorityResponse.status} ${priorityResponse.statusText}`);
+          console.warn(`Falling back to mock priority data: ${priorityResponse.status} ${priorityResponse.statusText}`);
+          // Use fallback data if API fails
+          const fallbackData = generateMockPriorityData();
+          const recoveryData = getPriorityAreasByCategory(fallbackData, "Recovery");
+          setRecoveryPriorities(recoveryData);
+          
+          // Group data by area for analysis
+          const groups: Record<string, any[]> = {};
+          recoveryData.forEach((item) => {
+            if (!groups[item.Area]) {
+              groups[item.Area] = [];
+            }
+            groups[item.Area].push(item);
+          });
+          setAreaGroups(groups);
+          
+          // Calculate progress metrics
+          const progress = calculatePriorityProgress(recoveryData);
+          setProgressMetrics(progress);
+        } else {
+          const priorityData = await priorityResponse.json();
+          const recoveryData = getPriorityAreasByCategory(priorityData, "Recovery");
+          setRecoveryPriorities(recoveryData);
+          
+          // Group data by area for analysis
+          const groups: Record<string, any[]> = {};
+          recoveryData.forEach((item) => {
+            if (!groups[item.Area]) {
+              groups[item.Area] = [];
+            }
+            groups[item.Area].push(item);
+          });
+          setAreaGroups(groups);
+          
+          // Calculate progress metrics
+          const progress = calculatePriorityProgress(recoveryData);
+          setProgressMetrics(progress);
         }
-        const priorityData = await priorityResponse.json();
-        const recoveryData = getPriorityAreasByCategory(priorityData, "Recovery");
-        setRecoveryPriorities(recoveryData);
+        
+        // Fetch recovery metrics data
+        const metricsResponse = await fetch(`${basePath}/api/data/mock-recovery`);
+        if (!metricsResponse.ok) {
+          console.warn(`Falling back to mock recovery data: ${metricsResponse.status} ${metricsResponse.statusText}`);
+          // Use fallback data if API fails
+          const fallbackData = generateMockRecoveryData();
+          
+          // Filter based on selected time range
+          const filteredData = filterByTimeRange(fallbackData, timeRange);
+          
+          // Calculate averages from the filtered data
+          const averages = calculateAverageRecoveryScores(filteredData);
+          setRecoveryMetrics(averages);
+        } else {
+          const metricsData = await metricsResponse.json();
+          
+          // Filter based on selected time range
+          const filteredData = filterByTimeRange(metricsData, timeRange);
+          
+          // Calculate averages from the filtered data
+          const averages = calculateAverageRecoveryScores(filteredData);
+          setRecoveryMetrics(averages);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error("Error loading recovery data:", error);
+        // Use fallback data in case of error
+        const fallbackPriorityData = generateMockPriorityData();
+        const recoveryPriorityData = getPriorityAreasByCategory(fallbackPriorityData, "Recovery");
+        setRecoveryPriorities(recoveryPriorityData);
         
         // Group data by area for analysis
         const groups: Record<string, any[]> = {};
-        recoveryData.forEach((item) => {
+        recoveryPriorityData.forEach((item) => {
           if (!groups[item.Area]) {
             groups[item.Area] = [];
           }
@@ -91,26 +274,15 @@ export function RecoveryData({ showCharts = true }: RecoveryDataProps) {
         setAreaGroups(groups);
         
         // Calculate progress metrics
-        const progress = calculatePriorityProgress(recoveryData);
+        const progress = calculatePriorityProgress(recoveryPriorityData);
         setProgressMetrics(progress);
         
-        // Fetch recovery metrics data
-        const metricsResponse = await fetch('/api/data/mock-recovery');
-        if (!metricsResponse.ok) {
-          throw new Error(`Failed to fetch recovery data: ${metricsResponse.status} ${metricsResponse.statusText}`);
-        }
-        const metricsData = await metricsResponse.json();
-        
-        // Filter based on selected time range
-        const filteredData = filterByTimeRange(metricsData, timeRange);
-        
-        // Calculate averages from the filtered data
+        // Generate mock recovery metrics
+        const fallbackMetricsData = generateMockRecoveryData();
+        const filteredData = filterByTimeRange(fallbackMetricsData, timeRange);
         const averages = calculateAverageRecoveryScores(filteredData);
         setRecoveryMetrics(averages);
         
-        setLoading(false);
-      } catch (error) {
-        console.error("Error loading recovery data:", error);
         setLoading(false);
       }
     }
@@ -269,32 +441,34 @@ export function RecoveryData({ showCharts = true }: RecoveryDataProps) {
         </>
       )}
 
-      {showCharts && progressData.some(item => item.value > 0) && (
+      {showCharts && (
         <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg mb-6">
           <h4 className="text-white font-medium mb-3">Recovery Metrics ({timeRange === '7days' ? '7-Day' : timeRange === '30days' ? '30-Day' : '90-Day'} Average)</h4>
-          <ResponsiveContainer width="100%" height={250}>
-            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-              <PolarGrid stroke="#444" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#ccc' }} />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#ccc' }} />
-              <Radar
-                name="Recovery Score"
-                dataKey="A"
-                stroke="#1E54B7"
-                fill="#1E54B7"
-                fillOpacity={0.6}
-              />
-              <Tooltip formatter={(value) => [`${parseInt(value.toString())}%`, 'Score']} />
-            </RadarChart>
-          </ResponsiveContainer>
+          <div className="h-[250px]"> {/* Fixed height container */}
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                <PolarGrid stroke="#444" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#ccc', fontSize: 11 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#ccc' }} />
+                <Radar
+                  name="Recovery Score"
+                  dataKey="A"
+                  stroke="#1E54B7"
+                  fill="#1E54B7"
+                  fillOpacity={0.6}
+                />
+                <Tooltip formatter={(value) => [`${parseInt(value.toString())}%`, 'Score']} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       )}
 
       <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
         <h4 className="text-white font-medium mb-3">Recovery Priority Areas</h4>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
+        <div className="overflow-x-auto rounded-lg">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-900 bg-opacity-50">
               <tr className="border-b border-gray-700">
                 <th className="py-2 px-3 text-xs font-medium text-gray-300">Priority</th>
                 <th className="py-2 px-3 text-xs font-medium text-gray-300">Area</th>
@@ -311,7 +485,7 @@ export function RecoveryData({ showCharts = true }: RecoveryDataProps) {
                   const statusColor = statusColors[colorKey] || "bg-gray-500/20 text-gray-300"
 
                   return (
-                    <tr key={index} className="border-b border-gray-800">
+                    <tr key={index} className={index % 2 === 0 ? "bg-gray-900 bg-opacity-20" : "bg-gray-800 bg-opacity-20"}>
                       <td className="py-2 px-3 text-sm text-white">{item.Priority}</td>
                       <td className="py-2 px-3 text-sm text-gray-300">{item.Area}</td>
                       <td className="py-2 px-3 text-sm text-gray-300">{item.Target}</td>

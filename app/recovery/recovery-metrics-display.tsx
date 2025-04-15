@@ -65,12 +65,15 @@ export function RecoveryMetricsDisplay({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-gray-800 p-3 border border-gray-700 rounded shadow-lg">
-          <p className="text-white font-medium">{label}</p>
+        <div className="bg-gray-800 p-3 border border-gray-700 rounded-md shadow-lg">
+          <p className="text-white font-medium text-sm border-b border-gray-700 pb-1 mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
-              {entry.name}: {typeof entry.value === 'number' ? entry.value.toFixed(1) : entry.value}
-            </p>
+            <div key={index} className="flex items-center space-x-2 py-0.5">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
+              <p style={{ color: entry.color }} className="text-xs">
+                {entry.name}: {typeof entry.value === 'number' ? entry.value.toFixed(1) : entry.value}
+              </p>
+            </div>
           ))}
         </div>
       );
@@ -145,105 +148,124 @@ export function RecoveryMetricsDisplay({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <div className="bg-gray-900 bg-opacity-70 backdrop-blur-sm p-6 rounded-lg border border-gray-800">
           <h3 className="text-xl font-medium text-white mb-4">Recovery Trend</h3>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart
-              data={recoveryTrendData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis 
-                dataKey="date" 
-                tick={{ fill: '#ccc' }} 
-                axisLine={{ stroke: '#666' }}
-              />
-              <YAxis 
-                domain={[0, 100]} 
-                tick={{ fill: '#ccc' }} 
-                axisLine={{ stroke: '#666' }}
-                tickFormatter={(value) => `${value}%`}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ color: '#ccc' }} />
-              <Line 
-                type="monotone" 
-                dataKey="overall" 
-                name="Overall" 
-                stroke="#1E54B7" 
-                strokeWidth={2} 
-                dot={{ r: 4 }}
-                activeDot={{ r: 8 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="sleep" 
-                name="Sleep" 
-                stroke="#4CAF50" 
-                strokeWidth={1.5} 
-                dot={{ r: 3 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="soreness" 
-                name="Soreness" 
-                stroke="#FFC107" 
-                strokeWidth={1.5} 
-                dot={{ r: 3 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="bio" 
-                name="Biomarkers" 
-                stroke="#FF5722" 
-                strokeWidth={1.5} 
-                dot={{ r: 3 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="h-[350px]"> {/* Fixed height container */}
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={recoveryTrendData}
+                margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fill: '#ccc' }} 
+                  axisLine={{ stroke: '#666' }}
+                  height={40}
+                  angle={-45}
+                  textAnchor="end"
+                  tickMargin={10}
+                />
+                <YAxis 
+                  domain={[0, 100]} 
+                  tick={{ fill: '#ccc' }} 
+                  axisLine={{ stroke: '#666' }}
+                  tickFormatter={(value) => `${value}%`}
+                  width={40}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  wrapperStyle={{ color: '#ccc', paddingTop: '10px' }} 
+                  verticalAlign="bottom" 
+                  height={36}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="overall" 
+                  name="Overall" 
+                  stroke="#1E54B7" 
+                  strokeWidth={2} 
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 8 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="sleep" 
+                  name="Sleep" 
+                  stroke="#4CAF50" 
+                  strokeWidth={1.5} 
+                  dot={{ r: 3 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="soreness" 
+                  name="Soreness" 
+                  stroke="#FFC107" 
+                  strokeWidth={1.5} 
+                  dot={{ r: 3 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="bio" 
+                  name="Biomarkers" 
+                  stroke="#FF5722" 
+                  strokeWidth={1.5} 
+                  dot={{ r: 3 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
         
         <div className="bg-gray-900 bg-opacity-70 backdrop-blur-sm p-6 rounded-lg border border-gray-800">
           <h3 className="text-xl font-medium text-white mb-4">Recovery Profile</h3>
-          <div className="h-[350px] flex flex-col md:flex-row items-center justify-center">
-            <div className="w-full h-[250px] mb-4 md:mb-0 md:w-1/2">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                  <PolarGrid stroke="#444" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#ccc' }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#ccc' }} />
-                  <Radar
-                    name="Recovery"
-                    dataKey="value"
-                    stroke="#1E54B7"
-                    fill="#1E54B7"
-                    fillOpacity={0.6}
-                  />
-                  <Tooltip formatter={(value) => [`${parseInt(value.toString())}%`, 'Score']} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-            
-            <div className="w-full md:w-1/2 h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={recoveryStatusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {recoveryStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value) => [`${value.toFixed(1)}%`, 'Percentage']}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+          <div className="h-[350px]"> {/* Fixed height container */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+              <div className="flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={250}>
+                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                    <PolarGrid stroke="#444" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#ccc', fontSize: 10 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#ccc' }} />
+                    <Radar
+                      name="Recovery"
+                      dataKey="value"
+                      stroke="#1E54B7"
+                      fill="#1E54B7"
+                      fillOpacity={0.6}
+                    />
+                    <Tooltip formatter={(value) => [`${parseInt(value.toString())}%`, 'Score']} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div className="flex flex-col items-center justify-center">
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={recoveryStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      labelLine={false}
+                    >
+                      {recoveryStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value.toFixed(1)}%`, 'Percentage']} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {recoveryStatusData.map((entry, index) => (
+                    <div key={index} className="flex items-center text-sm">
+                      <span className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                      <span className="text-gray-300">{entry.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -253,25 +275,25 @@ export function RecoveryMetricsDisplay({
       <div className="bg-gray-900 bg-opacity-70 backdrop-blur-sm p-6 rounded-lg border border-gray-800">
         <h3 className="text-xl font-medium text-white mb-4">Recovery Recommendations</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+          <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
             <h4 className="text-lg font-medium text-white mb-3">Based on Current Status</h4>
-            <div className="space-y-4">
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
               {generateRecoveryRecommendations(overallScore, sleepScore, sorenessScore, biomarkersScore).map((rec, index) => (
                 <div key={index} className="flex items-start">
-                  <div className="h-5 w-5 mt-0.5 flex-shrink-0">
+                  <div className="mt-1 mr-2 flex-shrink-0">
                     <div className="h-2 w-2 rounded-full bg-[#1E54B7]"></div>
                   </div>
-                  <p className="ml-2 text-sm text-gray-300">{rec}</p>
+                  <p className="text-sm text-gray-300">{rec}</p>
                 </div>
               ))}
             </div>
           </div>
           
-          <div>
+          <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
             <h4 className="text-lg font-medium text-white mb-3">Focus Areas</h4>
-            <div className="space-y-4">
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
               {generateFocusAreas(radarData).map((area, index) => (
-                <div key={index} className="bg-gray-800 p-3 rounded-lg">
+                <div key={index} className="bg-gray-700 bg-opacity-50 p-3 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
                     <h5 className="text-white text-sm font-medium">{area.subject} Focus</h5>
                     <span className={`px-2 py-1 text-xs rounded-full ${
@@ -286,7 +308,7 @@ export function RecoveryMetricsDisplay({
                        'Poor'}
                     </span>
                   </div>
-                  <p className="text-gray-400 text-xs">{generateFocusAreaText(area.subject, area.value)}</p>
+                  <p className="text-gray-300 text-xs leading-relaxed">{generateFocusAreaText(area.subject, area.value)}</p>
                 </div>
               ))}
             </div>
