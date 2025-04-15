@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// Add these exports for static export compatibility
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 export async function GET() {
   // Generate dates for the last 100 days
   const mockData = [];

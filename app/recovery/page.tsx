@@ -19,10 +19,14 @@ export default function Recovery() {
       try {
         console.log("Recovery page: Loading recovery data")
         
-        // Fetch data directly with a timeout
-        const response = await fetch('/api/data/mock-recovery');
+        // Use relative URL with basePath support for GitHub Pages
+        const basePath = process.env.NODE_ENV === 'production' ? '/CFC_Performance_Insights_Vizathon' : '';
+        const response = await fetch(`${basePath}/api/data/mock-recovery`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch recovery data: ${response.status} ${response.statusText}`);
+          console.warn(`Falling back to mock data due to API error: ${response.status} ${response.statusText}`);
+          // Fall back to static mock data if API fails on GitHub Pages
+          setRecoveryData(generateMockRecoveryData());
+          return;
         }
         
         // Parse the JSON response directly
@@ -32,6 +36,8 @@ export default function Recovery() {
         setRecoveryData(jsonData);
       } catch (error) {
         console.error("Error loading recovery data:", error)
+        // Fall back to static mock data on error
+        setRecoveryData(generateMockRecoveryData());
       } finally {
         setLoading(false)
       }
@@ -39,6 +45,55 @@ export default function Recovery() {
     
     loadData()
   }, [])
+  
+  // Fallback function to generate mock data if API fails
+  function generateMockRecoveryData() {
+    // Generate dates for the last 100 days
+    const mockData = [];
+    const today = new Date();
+    
+    for (let i = 100; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      const dateString = date.toISOString().split('T')[0];
+      
+      // Base values that improve over time with some randomness
+      const dayIndex = 100 - i; // 0 for oldest, 100 for today
+      const improvement = dayIndex / 200; // Gradual improvement factor
+      
+      // Generate some random ups and downs to make it look realistic
+      const randomFactor = Math.sin(i * 0.7) * 0.1; // Sine wave variation
+      const matchDayEffect = i % 7 === 0 ? -0.1 : 0; // Lower scores on match days (every 7 days)
+      const randomNoise = (Math.random() - 0.5) * 0.05; // Small random noise
+      
+      // Combine factors for the day's adjustment
+      const dayAdjustment = improvement + randomFactor + matchDayEffect + randomNoise;
+      
+      // Create a baseline for this day (0.5 to 0.9 range)
+      let baseline = Math.min(Math.max(0.7 + dayAdjustment, 0.5), 0.9);
+      
+      // Add to data array
+      mockData.push({
+        "date": dateString,
+        "bio_completeness": baseline + (Math.random() * 0.1),
+        "bio_composite": baseline - (Math.random() * 0.1),
+        "msk_joint_range_completeness": baseline + (Math.random() * 0.15),
+        "msk_joint_range_composite": baseline,
+        "msk_load_tolerance_completeness": baseline - (Math.random() * 0.05),
+        "msk_load_tolerance_composite": baseline - (Math.random() * 0.1),
+        "subjective_completeness": baseline + (Math.random() * 0.2),
+        "subjective_composite": baseline + (Math.random() * 0.1),
+        "soreness_completeness": baseline,
+        "soreness_composite": baseline - (Math.random() * 0.05),
+        "sleep_completeness": baseline + (Math.random() * 0.1),
+        "sleep_composite": baseline,
+        "emboss_baseline_score": baseline + (Math.random() * 0.05) - 0.025,
+        "stress_load_composite": baseline - (Math.random() * 0.1)
+      });
+    }
+    
+    return mockData;
+  }
 
   return (
     <div className="min-h-screen flex flex-col relative">

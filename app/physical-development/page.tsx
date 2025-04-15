@@ -20,9 +20,14 @@ export default function PhysicalDevelopment() {
     async function loadData() {
       try {
         console.log("Physical development page: Loading physical data")
-        const response = await fetch('/api/data/mock-physical');
+        // Use relative URL with basePath support for GitHub Pages
+        const basePath = process.env.NODE_ENV === 'production' ? '/CFC_Performance_Insights_Vizathon' : '';
+        const response = await fetch(`${basePath}/api/data/mock-physical`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch physical data: ${response.status} ${response.statusText}`);
+          console.warn(`Falling back to mock data due to API error: ${response.status} ${response.statusText}`);
+          // Fall back to static mock data if API fails on GitHub Pages
+          setPhysicalData(generateMockPhysicalData());
+          return;
         }
         
         // Parse the JSON response directly
@@ -32,6 +37,8 @@ export default function PhysicalDevelopment() {
         setPhysicalData(jsonData)
       } catch (error) {
         console.error("Error loading physical capability data:", error)
+        // Fall back to static mock data on error
+        setPhysicalData(generateMockPhysicalData());
       } finally {
         setLoading(false)
       }
@@ -39,6 +46,62 @@ export default function PhysicalDevelopment() {
     
     loadData()
   }, [])
+  
+  // Fallback function to generate mock data if API fails
+  function generateMockPhysicalData() {
+    const movements = ["Sprint", "Jump", "Agility", "Strength", "Endurance"];
+    const qualities = {
+      "Sprint": ["Acceleration", "Max velocity", "Technique", "Power"],
+      "Jump": ["Take off", "Land", "Vertical power", "Horizontal power"],
+      "Agility": ["Acceleration", "Deceleration", "Change of direction", "Balance"],
+      "Strength": ["Upper body", "Lower body", "Core", "Functional"],
+      "Endurance": ["Aerobic", "Anaerobic", "Recovery", "Stamina"]
+    };
+    
+    const expressions = ["Dynamic", "Isometric", "Concentric", "Eccentric"];
+    
+    // Generate dates for the last 90 days
+    const dates = [];
+    const today = new Date();
+    for (let i = 90; i >= 0; i -= 2) { // Every 2 days
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      dates.push(date.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+    }
+    
+    const mockData = [];
+    
+    // Generate data for all movement types across all dates
+    dates.forEach(date => {
+      movements.forEach(movement => {
+        // Get qualities for this movement
+        const movementQualities = qualities[movement];
+        
+        // Add entries for each quality
+        movementQualities.forEach(quality => {
+          // Calculate a benchmark that improves slightly over time to show progression
+          // Base score between 70-90 with some random variation
+          const dayIndex = dates.indexOf(date);
+          const improvementFactor = dayIndex / dates.length * 10; // Max 10% improvement over time
+          const baseScore = 70 + Math.random() * 20;
+          const benchmarkPct = Math.min(baseScore + improvementFactor, 95);
+          
+          // Random expression
+          const expression = expressions[Math.floor(Math.random() * expressions.length)];
+          
+          mockData.push({
+            date,
+            movement,
+            quality,
+            expression,
+            benchmarkPct: parseFloat(benchmarkPct.toFixed(1))
+          });
+        });
+      });
+    });
+    
+    return mockData;
+  }
   
   return (
     <div className="min-h-screen flex flex-col relative">

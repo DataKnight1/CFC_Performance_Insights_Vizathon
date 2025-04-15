@@ -33,37 +33,26 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
         
-      - name: Create or Verify next.config.js for Static Export
-
+      - name: Extract repository name for basePath
+        id: repo-name
         run: |
           REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
-          echo "/** @type {import('next').NextConfig} */
-          const nextConfig = {
-            output: 'export', // Crucial for static export
-            basePath: '/$REPO_NAME', // Dynamically set based on repo name
-            assetPrefix: '/$REPO_NAME/', // Needed for assets when using basePath
-            images: {
-              unoptimized: true, // Required for static export (next/image optimization needs a server)
-            },
-            // WARNING: Ignoring errors can hide problems. Fix them in your code!
-            typescript: {
-              ignoreBuildErrors: true,
-            },
-            eslint: {
-              ignoreDuringBuilds: true,
-            },
-          };
-
-          module.exports = nextConfig;" > next.config.js
-          echo "Created next.config.js with basePath: /$REPO_NAME"
-          cat next.config.js # Print the created config for verification
+          echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
+          echo "Repository name: $REPO_NAME"
 
       - name: Build Next.js static site
-
+        env:
+          NODE_ENV: production
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: npm run build
 
       - name: Verify build output
-        run: ls -la ./out
+        run: |
+          echo "Contents of ./out directory:"
+          ls -la ./out
+          
+          echo "Checking for API routes:"
+          find ./out -path "*/api/*" -type f | sort
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

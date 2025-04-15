@@ -5,8 +5,16 @@ try {
   // ignore error
 }
 
+// Extract repository name from environment variable or use a default
+const repoName = process.env.GITHUB_REPOSITORY 
+  ? process.env.GITHUB_REPOSITORY.split('/')[1] 
+  : 'CFC_Performance_Insights_Vizathon';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export', // Enable static exports for GitHub Pages
+  basePath: process.env.NODE_ENV === 'production' ? `/${repoName}` : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? `/${repoName}/` : '',
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -14,7 +22,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
+    unoptimized: true, // Required for static export
+    domains: ['hebbkx1anhila5yf.public.blob.vercel-storage.com'], // Allow external image sources
   },
   experimental: {
     webpackBuildWorker: true,

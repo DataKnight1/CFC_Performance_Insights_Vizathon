@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// Add these exports for static export compatibility
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 export async function GET() {
   console.log("Simple GPS API: Generating direct JSON response");
   
