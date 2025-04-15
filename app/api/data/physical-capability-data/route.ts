@@ -1,24 +1,50 @@
 import { NextResponse } from 'next/server';
-import * as fs from 'fs';
-import * as path from 'path';
+
+// Add these exports for static export compatibility
+export const dynamic = 'force-static';
+export const revalidate = false;
 
 export async function GET() {
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'CFC Physical Capability Data.xlsx');
-    const fileBuffer = fs.readFileSync(filePath);
-    
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      },
-    });
-  } catch (error) {
-    console.error('Error reading Excel file:', error);
-    return new NextResponse(JSON.stringify({ error: 'Failed to read physical capability data' }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  }
-}
+  console.log('API: Using mock physical capability data for static export');
+  
+  // Return mock JSON data instead of reading from Excel file
+  const mockData = [
+    {
+      date: "2023-01-15",
+      movement: "Sprint",
+      quality: "Acceleration",
+      expression: "Dynamic",
+      benchmarkPct: 78.5
+    },
+    {
+      date: "2023-01-15",
+      movement: "Sprint",
+      quality: "Max velocity",
+      expression: "Dynamic",
+      benchmarkPct: 82.3
+    },
+    {
+      date: "2023-01-15",
+      movement: "Sprint", 
+      quality: "Deceleration",
+      expression: "Dynamic",
+      benchmarkPct: 76.1
+    },
+    {
+      date: "2023-01-15",
+      movement: "Jump",
+      quality: "Take off",
+      expression: "Dynamic",
+      benchmarkPct: 84.2
+    },
+    {
+      date: "2023-01-15",
+      movement: "Jump",
+      quality: "Land",
+      expression: "Dynamic",
+      benchmarkPct: 79.8
+    },
+    {
+      date: "2023-01-15",
+      movement: "Agility",
+      quality: "
