@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -6,14 +8,21 @@ import {
   BarChart, Bar, Cell, PieChart, Pie, Sector, ScatterChart, Scatter,
   ComposedChart, ReferenceLine
 } from 'recharts';
+import { fetchRecoveryData, calculateAverageRecoveryScores } from "../utils/recovery-data";
+
+interface RecoveryMetricsDisplayProps {
+  recoveryData: any[];
+  initialTimeFrame: '7days' | '30days' | '90days';
+  onTimeFrameChange: (timeFrame: '7days' | '30days' | '90days') => void;
+}
 
 // Custom tooltip that shows more detailed information
-const CustomTooltip = ({ active, payload, label, unit = "%" }) => {
+const CustomTooltip = ({ active, payload, label, unit = "%" }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900 p-3 border border-gray-700 rounded shadow-lg">
         <p className="text-gray-300 text-sm font-medium mb-1">{label}</p>
-        {payload.map((entry, index) => (
+        {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center mb-1 last:mb-0">
             <div 
               className="w-3 h-3 rounded-full mr-2" 
@@ -32,7 +41,7 @@ const CustomTooltip = ({ active, payload, label, unit = "%" }) => {
 };
 
 // Custom active shape for pie chart
-const renderActiveShape = (props) => {
+const renderActiveShape = (props: any) => {
   const { 
     cx, cy, innerRadius, outerRadius, startAngle, endAngle,
     fill, payload, percent, value 
@@ -63,7 +72,7 @@ const renderActiveShape = (props) => {
 };
 
 // Generate daily sleep data for the past N days
-const generateSleepData = (days) => {
+const generateSleepData = (days: number) => {
   const data = [];
   const now = new Date();
   
@@ -108,7 +117,7 @@ const generateSleepData = (days) => {
 };
 
 // Generate hydration data for time chart
-const generateHydrationData = (days) => {
+const generateHydrationData = (days: number) => {
   const data = [];
   const now = new Date();
   
@@ -136,7 +145,7 @@ const generateHydrationData = (days) => {
 };
 
 // Generate HRV and heart rate data
-const generateHrvData = (days) => {
+const generateHrvData = (days: number) => {
   const data = [];
   const now = new Date();
   
@@ -181,7 +190,7 @@ const generateHrvData = (days) => {
 };
 
 // Generate detailed training and recovery data
-const generateTrainingLoadData = (days) => {
+const generateTrainingLoadData = (days: number) => {
   const data = [];
   const now = new Date();
   
@@ -230,7 +239,11 @@ const generateTrainingLoadData = (days) => {
 };
 
 // Main component
-const EnhancedRecoveryMetricsDisplay = ({ recoveryData = [], initialTimeFrame = '7days', onTimeFrameChange }) => {
+export function RecoveryMetricsDisplay({ 
+  recoveryData = [], 
+  initialTimeFrame = '7days', 
+  onTimeFrameChange 
+}: RecoveryMetricsDisplayProps) {
   const [timeRange, setTimeRange] = useState(initialTimeFrame);
   const [averageMetrics, setAverageMetrics] = useState({
     overall: 0,
@@ -239,17 +252,17 @@ const EnhancedRecoveryMetricsDisplay = ({ recoveryData = [], initialTimeFrame = 
     subjective: 0,
     bio: 0
   });
-  const [sleepData, setSleepData] = useState([]);
-  const [hydrationData, setHydrationData] = useState([]);
-  const [hrvData, setHrvData] = useState([]);
-  const [trainingLoadData, setTrainingLoadData] = useState([]);
+  const [sleepData, setSleepData] = useState<any[]>([]);
+  const [hydrationData, setHydrationData] = useState<any[]>([]);
+  const [hrvData, setHrvData] = useState<any[]>([]);
+  const [trainingLoadData, setTrainingLoadData] = useState<any[]>([]);
   const [activeNutrientIndex, setActiveNutrientIndex] = useState(0);
   
   // Define the days to show based on timeRange
   const daysToShow = timeRange === '7days' ? 7 : timeRange === '30days' ? 30 : 90;
   
   // Handle time range changes
-  const handleTimeRangeChange = (newRange) => {
+  const handleTimeRangeChange = (newRange: '7days' | '30days' | '90days') => {
     setTimeRange(newRange);
     if (onTimeFrameChange) {
       onTimeFrameChange(newRange);
@@ -280,7 +293,7 @@ const EnhancedRecoveryMetricsDisplay = ({ recoveryData = [], initialTimeFrame = 
   }, [timeRange, recoveryData, daysToShow]);
   
   // Process real data when available
-  const updateMetrics = (data, range) => {
+  const updateMetrics = (data: any[], range: string) => {
     const now = new Date();
     let startDate = new Date(now);
     
@@ -307,7 +320,7 @@ const EnhancedRecoveryMetricsDisplay = ({ recoveryData = [], initialTimeFrame = 
     
     // Calculate average metrics
     if (filteredData.length > 0) {
-      const calculateAverage = (items, property, normalizeFrom = [-1, 1], normalizeTo = [0, 100]) => {
+      const calculateAverage = (items: any[], property: string, normalizeFrom = [-1, 1], normalizeTo = [0, 100]) => {
         const values = items
           .filter(item => item[property] !== undefined && item[property] !== null)
           .map(item => {
@@ -319,7 +332,7 @@ const EnhancedRecoveryMetricsDisplay = ({ recoveryData = [], initialTimeFrame = 
           });
         
         return values.length ? 
-          values.reduce((sum, val) => sum + val, 0) / values.length : 
+          values.reduce((sum: number, val: number) => sum + val, 0) / values.length : 
           0;
       };
       
@@ -1048,6 +1061,4 @@ const EnhancedRecoveryMetricsDisplay = ({ recoveryData = [], initialTimeFrame = 
       </div>
     </div>
   );
-};
-
-export default EnhancedRecoveryMetricsDisplay;
+}
