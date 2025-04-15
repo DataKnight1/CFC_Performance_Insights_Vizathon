@@ -1,493 +1,83 @@
-- name: Create not-found page
-        run: |
-          # Create a proper not-found page for API routes
-          mkdir -p app/api
-          cat > app/api/not-found.js << 'EOF'
-          export default function NotFound() {
-            return (
-              <div className="container py-12 text-center">
-                <h1 className="text-2xl font-bold">API Not Available</h1>
-                <p className="mt-4">API routes are not available in the static site preview.</p>
-              </div>
-            );
-          }
-          EOFname: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: ["main"]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-        
-      - name: Modify next.config for static export
-        run: |
-          # Extract repository owner and name
-          REPO_OWNER=$(echo $GITHUB_REPOSITORY | cut -d '/' -f1)
-          REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d '/' -f2)
-          
-          cat > next.config.mjs << EOF
-          /**
-           * @type {import('next').NextConfig}
-           */
-          const nextConfig = {
-            output: 'export',
-            images: {
-              unoptimized: true,
-              domains: ['images.unsplash.com'],
-            },
-            trailingSlash: true,
-            typescript: {
-              ignoreBuildErrors: true,
-            },
-            eslint: {
-              ignoreDuringBuilds: true,
-            },
-            // Add basePath for GitHub Pages
-            basePath: '${REPO_NAME}' ? '/${REPO_NAME}' : '',
-            // Add assetPrefix for GitHub Pages
-            assetPrefix: '${REPO_NAME}' ? 'https://${REPO_OWNER}.github.io/${REPO_NAME}' : '',
-            // Disable server components
-            reactStrictMode: true,
-            swcMinify: true,
-            // For static export
-            distDir: 'out'
-          };
-          
-          export default nextConfig;
-          EOF
-        
-      - name: Fix browse page
-        run: |
-          mkdir -p app/browse
-          cat > app/browse/page.tsx << 'EOF'
-          'use client'
-          
-          import { Button } from "@/components/ui/button"
-          import { Input } from "@/components/ui/input"
-          import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-          import { Slider } from "@/components/ui/slider"
-          import { Search, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
-          import ItemCard from "@/components/item-card"
-          import Link from "next/link"
-          import { getPaginatedProducts } from "@/lib/mock-data"
-          import { useSearchParams } from "next/navigation"
-          import { useEffect, useState } from "react"
-          
-          export default function BrowsePage() {
-            const searchParams = useSearchParams()
-            const pageParam = searchParams.get('page')
-            
-            const [currentPage, setCurrentPage] = useState(1)
-            const [products, setProducts] = useState([])
-            const [totalItems, setTotalItems] = useState(0)
-            const [totalPages, setTotalPages] = useState(1)
-            
-            useEffect(() => {
-              const page = pageParam ? parseInt(pageParam, 10) : 1
-              const validPage = isNaN(page) ? 1 : page
-              setCurrentPage(validPage)
-              
-              const itemsPerPage = 9
-              const result = getPaginatedProducts(validPage, itemsPerPage)
-              
-              setProducts(result.products)
-              setTotalItems(result.totalItems)
-              setTotalPages(result.totalPages)
-            }, [pageParam])
-            
-            const itemsPerPage = 9
-          
-            return (
-              <div className="flex flex-col min-h-screen">
-                <section className="w-full py-6 md:py-12 bg-muted">
-                  <div className="container px-4 md:px-6">
-                    <div className="flex flex-col items-center space-y-4 text-center">
-                      <div className="space-y-2">
-                        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">Browse Items</h1>
-                        <p className="max-w-[700px] text-muted-foreground md:text-xl">
-                          Find what you need from our community of lenders
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-                
-                <section className="w-full py-6">
-                  <div className="container px-4 md:px-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                      {products.map((product) => (
-                        <ItemCard
-                          key={product.id}
-                          id={product.id}
-                          title={product.title}
-                          description={product.description}
-                          image={product.image_url}
-                          price={`$${product.daily_rate}/day`}
-                          location={product.location}
-                          category={product.category}
-                          rating={product.rating}
-                          reviews={product.reviews}
-                        />
-                      ))}
-                    </div>
-                    
-                    {/* Pagination */}
-                    <div className="flex justify-center mt-8">
-                      <nav className="flex items-center space-x-1">
-                        <Button variant="outline" size="icon" disabled={currentPage === 1} aria-label="Previous page" asChild>
-                          <Link href={`${currentPage > 1 ? `/browse?page=${currentPage - 1}` : '#'}`}>
-                            <ChevronLeft className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        
-                        {[...Array(totalPages).keys()].map((pageNum) => (
-                          <Button 
-                            key={pageNum} 
-                            variant={currentPage === pageNum + 1 ? "default" : "outline"}
-                            size="sm"
-                            asChild
-                          >
-                            <Link href={`/browse?page=${pageNum + 1}`}>
-                              {pageNum + 1}
-                            </Link>
-                          </Button>
-                        ))}
-                        
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          disabled={currentPage === totalPages}
-                          aria-label="Next page"
-                          asChild
-                        >
-                          <Link href={`${currentPage < totalPages ? `/browse?page=${currentPage + 1}` : '#'}`}>
-                            <ChevronRight className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </nav>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            )
-          }
-          EOF
-      
-      - name: Create item detail files with more items
-        run: |
-          # Create the directory structure
-          mkdir -p app/item/[id]
-          
-          # Create the main page.tsx file
-          cat > app/item/[id]/page.tsx << 'EOF'
-          import { getProductById, getRelatedProducts } from "@/lib/mock-data"
-          import ItemDetail from "./item-detail"
-          
-          // Pre-generate paths for the first 10 items - increased from 5
-          export function generateStaticParams() {
-            return [
-              { id: '1' },
-              { id: '2' },
-              { id: '3' },
-              { id: '4' },
-              { id: '5' },
-              { id: '6' },
-              { id: '7' },
-              { id: '8' },
-              { id: '9' },
-              { id: '10' }
-            ]
-          }
-          
-          export default function ItemPage({ params }: { params: { id: string } }) {
-            // Get the product and related products data
-            const product = getProductById(params.id)
-            const relatedProducts = getRelatedProducts(params.id)
-            
-            // Render the client component with the data
-            return <ItemDetail product={product} relatedProducts={relatedProducts} />
-          }
-          EOF
-          
-          # Create the client-side component
-          cat > app/item/[id]/item-detail.tsx << 'EOF'
-          'use client'
-          
-          import { Badge } from "@/components/ui/badge"
-          import { Button } from "@/components/ui/button"
-          import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-          import { Separator } from "@/components/ui/separator"
-          import { Check, ChevronRight, Heart, MapPin, Share, Star } from "lucide-react"
-          import Image from "next/image"
-          import Link from "next/link"
-          import ItemCard from "@/components/item-card"
-          
-          export default function ItemDetail({ product, relatedProducts }: { 
-            product: any | null,
-            relatedProducts: any[]
-          }) {
-            if (!product) {
-              return (
-                <div className="container py-12 text-center">
-                  <h1 className="text-2xl font-bold">Item not found</h1>
-                  <p className="mt-4">The item you are looking for does not exist or has been removed.</p>
-                  <Button className="mt-6" asChild>
-                    <Link href="/browse">Browse Other Items</Link>
-                  </Button>
-                </div>
-              )
-            }
-          
-            return (
-              <div className="min-h-screen">
-                {/* Breadcrumb navigation */}
-                <div className="container py-4">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Link href="/" className="hover:text-foreground">
-                      Home
-                    </Link>
-                    <ChevronRight className="h-4 w-4 mx-1" />
-                    <Link href="/browse" className="hover:text-foreground">
-                      Browse
-                    </Link>
-                    <ChevronRight className="h-4 w-4 mx-1" />
-                    <span className="text-foreground">{product.title}</span>
-                  </div>
-                </div>
-          
-                {/* Main content */}
-                <div className="container py-6 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                  {/* Product images */}
-                  <div className="md:col-span-1">
-                    <div className="rounded-lg overflow-hidden border">
-                      <Image
-                        src={product.image_url}
-                        alt={product.title}
-                        width={600}
-                        height={450}
-                        className="object-cover w-full aspect-4/3"
-                        unoptimized // Required for static export
-                      />
-                    </div>
-                  </div>
-          
-                  {/* Product details */}
-                  <div className="md:col-span-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <Badge variant="outline" className="mb-2">{product.category}</Badge>
-                        <h1 className="text-3xl font-bold">{product.title}</h1>
-                        <div className="flex items-center mt-2 mb-4">
-                          <div className="flex items-center">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                            <span className="font-medium">{product.rating}</span>
-                          </div>
-                          <span className="mx-2 text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">{product.reviews} reviews</span>
-                          <span className="mx-2 text-muted-foreground">•</span>
-                          <div className="flex items-center text-muted-foreground">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            <span>{product.location}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-          
-                    <Separator className="my-4" />
-          
-                    <div className="space-y-4">
-                      <div>
-                        <h2 className="font-semibold text-lg">Description</h2>
-                        <p className="mt-2 text-muted-foreground">{product.description}</p>
-                      </div>
-          
-                      <div>
-                        <h2 className="font-semibold text-lg">Features</h2>
-                        <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
-                          <li className="flex items-center text-muted-foreground">
-                            <Check className="h-4 w-4 mr-2 text-primary" />
-                            <span>Brand: {product.brand}</span>
-                          </li>
-                          <li className="flex items-center text-muted-foreground">
-                            <Check className="h-4 w-4 mr-2 text-primary" />
-                            <span>Model: {product.model}</span>
-                          </li>
-                          <li className="flex items-center text-muted-foreground">
-                            <Check className="h-4 w-4 mr-2 text-primary" />
-                            <span>Condition: {product.condition}</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-          
-                  {/* Booking card */}
-                  <div className="lg:col-span-1 md:col-span-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-2xl">${product.daily_rate} <span className="text-base font-normal">/day</span></CardTitle>
-                        <CardDescription>Available for borrowing</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <h3 className="font-medium mb-2">Pricing</h3>
-                          <div className="space-y-1 text-sm">
-                            <div className="flex justify-between">
-                              <span>${product.daily_rate} x 3 days</span>
-                              <span>${product.daily_rate * 3}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Cleaning fee</span>
-                              <span>$15</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Service fee</span>
-                              <span>$10</span>
-                            </div>
-                            <Separator className="my-2" />
-                            <div className="flex justify-between font-medium">
-                              <span>Total</span>
-                              <span>${product.daily_rate * 3 + 25}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex flex-col space-y-2">
-                        <Button className="w-full">Request to Borrow</Button>
-                        <Button variant="outline" className="w-full">Contact Lender</Button>
-                      </CardFooter>
-                    </Card>
-                  </div>
-                </div>
-          
-                {/* Related items */}
-                <section className="container py-12">
-                  <h2 className="text-2xl font-bold mb-6">Related Items</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {relatedProducts.map((product) => (
-                      <ItemCard
-                        key={product.id}
-                        id={product.id}
-                        title={product.title}
-                        description={product.description}
-                        image={product.image_url}
-                        price={`$${product.daily_rate}/day`}
-                        location={product.location}
-                        category={product.category}
-                        rating={product.rating}
-                        reviews={product.reviews}
-                      />
-                    ))}
-                  </div>
-                </section>
-              </div>
-            )
-          }
-          EOF
-        
-      - name: Create improved client-side stubs for server actions
-        run: |
-          # Create stub folder for actions
-          mkdir -p actions-static
-          
-          # Create stub for contact.ts
-          cat > actions-static/contact.ts << 'EOF'
-          // This is a static stub for the contact server action
-          
-          export async function submitContactForm(formData: {
-            name: string
-            email: string
-            subject: string
-            message: string
-          }) {
-            // In a static export, we can't actually submit the form to a server
-            // Simulate a success response for the static site preview
-            console.log("Static site preview - form submission would happen on live site");
-            console.log("Form data:", formData);
-            
-            // Show a success message in the UI
-            return Promise.resolve({
-              success: true,
-              message: "Message sent successfully (Preview Mode - No actual submission in GitHub Pages)",
-            });
-          }
-          EOF
-          
-          # Create stub for subscribe.ts
-          cat > actions-static/subscribe.ts << 'EOF'
-          // This is a static stub for the subscription server action
-          
-          export async function subscribeToNewsletter(email: string) {
-            // In a static export, we can't actually save subscriptions
-            // Simulate a success response for the static site preview
-            console.log("Static site preview - subscription would happen on live site for:", email);
-            
-            // Show a success message in the UI
-            return Promise.resolve({
-              success: true,
-              message: "Subscription successful (Preview Mode - No actual subscription in GitHub Pages)",
-            });
-          }
-          EOF
-          
-          # Update imports in the contact page
-          sed -i 's|from "@/actions/contact"|from "@/actions-static/contact"|g' app/contact/page.tsx
-          
-          # Update imports in the footer component
-          sed -i 's|from "@/actions/subscribe"|from "@/actions-static/subscribe"|g' components/footer.tsx
-          
-          # Update imports in the home page 
-          sed -i 's|from "@/actions/subscribe"|from "@/actions-static/subscribe"|g' app/page.tsx
-        
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-        
-      - name: Build
-        run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-url.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key' }}
-        
-      - name: Create 404.html
-        run: |
-          cp out/404.html out/404.html || cp out/index.html out/404.html
-          
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./out
-          
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+name: Deploy Next.js site to GitHub Pages
+ 
+ on:
+   push:
+     branches: ["main"]
+   workflow_dispatch:
+ 
+ permissions:
+   contents: read
+   pages: write
+   id-token: write
+ 
+ concurrency:
+   group: "pages"
+   cancel-in-progress: false
+ 
+ jobs:
+   build:
+     runs-on: ubuntu-latest
+     steps:
+       - name: Checkout repository
+         uses: actions/checkout@v4
+ 
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+           node-version: '18'
+           cache: 'npm'
+ 
+       - name: Setup Pages
+         uses: actions/configure-pages@v4
+         with:
+           static_site_generator: next
+ 
+       - name: Install dependencies
+         run: npm ci --legacy-peer-deps
+ 
+       - name: Create build config that ignores TypeScript errors
+       - name: Fix API routes for static export
+         run: |
+           # Find all route.ts or route.js files in API folder and add dynamic = "force-static"
+           find app/api -name "route.ts" -o -name "route.js" | while read file; do
+             # Add export const dynamic = "force-static" to the beginning of the file
+             sed -i '1s/^/export const dynamic = "force-static";\n/' "$file"
+           done
+ 
+       - name: Create build config for static export
+         run: |
+           echo "/** @type {import('next').NextConfig} */
+           const nextConfig = {
+             output: 'export',
+             basePath: '/CFC_Performance_Insights_Vizathon',
+             images: {
+               unoptimized: true,
+             },
+             typescript: {
+               ignoreBuildErrors: true,
+             },
+             eslint: {
+               ignoreDuringBuilds: true,
+             },
+           };
+           
+           module.exports = nextConfig;" > next.config.js
+ 
+       - name: Build Next.js static site
+         run: npm run build
+ 
+       - name: Upload artifact
+         uses: actions/upload-pages-artifact@v3
+         with:
+           path: ./out
+ 
+   deploy:
+     needs: build
+     runs-on: ubuntu-latest
+     environment:
+       name: github-pages
+       url: ${{ steps.deployment.outputs.page_url }}
+     steps:
+       - name: Deploy to GitHub Pages
+         id: deployment
+         uses: actions/deploy-pages@v4
