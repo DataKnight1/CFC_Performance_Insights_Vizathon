@@ -1,83 +1,82 @@
 name: Deploy Next.js site to GitHub Pages
- 
- on:
-   push:
-     branches: ["main"]
-   workflow_dispatch:
- 
- permissions:
-   contents: read
-   pages: write
-   id-token: write
- 
- concurrency:
-   group: "pages"
-   cancel-in-progress: false
- 
- jobs:
-   build:
-     runs-on: ubuntu-latest
-     steps:
-       - name: Checkout repository
-         uses: actions/checkout@v4
- 
-       - name: Setup Node.js
-         uses: actions/setup-node@v4
-         with:
-           node-version: '18'
-           cache: 'npm'
- 
-       - name: Setup Pages
-         uses: actions/configure-pages@v4
-         with:
-           static_site_generator: next
- 
-       - name: Install dependencies
-         run: npm ci --legacy-peer-deps
- 
-       - name: Create build config that ignores TypeScript errors
-       - name: Fix API routes for static export
-         run: |
-           # Find all route.ts or route.js files in API folder and add dynamic = "force-static"
-           find app/api -name "route.ts" -o -name "route.js" | while read file; do
-             # Add export const dynamic = "force-static" to the beginning of the file
-             sed -i '1s/^/export const dynamic = "force-static";\n/' "$file"
-           done
- 
-       - name: Create build config for static export
-         run: |
-           echo "/** @type {import('next').NextConfig} */
-           const nextConfig = {
-             output: 'export',
-             basePath: '/CFC_Performance_Insights_Vizathon',
-             images: {
-               unoptimized: true,
-             },
-             typescript: {
-               ignoreBuildErrors: true,
-             },
-             eslint: {
-               ignoreDuringBuilds: true,
-             },
-           };
-           
-           module.exports = nextConfig;" > next.config.js
- 
-       - name: Build Next.js static site
-         run: npm run build
- 
-       - name: Upload artifact
-         uses: actions/upload-pages-artifact@v3
-         with:
-           path: ./out
- 
-   deploy:
-     needs: build
-     runs-on: ubuntu-latest
-     environment:
-       name: github-pages
-       url: ${{ steps.deployment.outputs.page_url }}
-     steps:
-       - name: Deploy to GitHub Pages
-         id: deployment
-         uses: actions/deploy-pages@v4
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Create or Verify next.config.js for Static Export
+
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+          echo "/** @type {import('next').NextConfig} */
+          const nextConfig = {
+            output: 'export', // Crucial for static export
+            basePath: '/$REPO_NAME', // Dynamically set based on repo name
+            assetPrefix: '/$REPO_NAME/', // Needed for assets when using basePath
+            images: {
+              unoptimized: true, // Required for static export (next/image optimization needs a server)
+            },
+            // WARNING: Ignoring errors can hide problems. Fix them in your code!
+            typescript: {
+              ignoreBuildErrors: true,
+            },
+            eslint: {
+              ignoreDuringBuilds: true,
+            },
+          };
+
+          module.exports = nextConfig;" > next.config.js
+          echo "Created next.config.js with basePath: /$REPO_NAME"
+          cat next.config.js # Print the created config for verification
+
+      - name: Build Next.js static site
+
+        run: npm run build
+
+      - name: Verify build output
+        run: ls -la ./out
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
